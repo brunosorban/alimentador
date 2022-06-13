@@ -40,23 +40,23 @@ void sweep_motor() {
 
     for (speed = 0; speed<= 255; speed+= 1) { // goes from 0 degrees to 180 degrees
         analogWrite(MOTORPIN1, speed);
-        digitalWrite(MOTORPIN2, LOW);
-        delay(15);                       // waits 15 ms for the servo to reach the position
+        analogWrite(MOTORPIN2, 0);
+        delay(10);                       // waits 15 ms for the servo to reach the position
     }
     for (speed= 255; speed>= 0; speed-= 1) { // goes from 180 degrees to 0 degrees
         analogWrite(MOTORPIN1, speed);
-        digitalWrite(MOTORPIN2, LOW);
-        delay(15);                       // waits 15 ms for the servo to reach the position
+        analogWrite(MOTORPIN2, 0);
+        delay(10);                       // waits 15 ms for the servo to reach the position
     }
     for (speed= 0; speed<= 255; speed+= 1) { // goes from 180 degrees to 0 degrees
-        digitalWrite(MOTORPIN1, LOW);
+        analogWrite(MOTORPIN1, 0);
         analogWrite(MOTORPIN2, speed);
-        delay(15);                       // waits 15 ms for the servo to reach the position
+        delay(10);                       // waits 15 ms for the servo to reach the position
     }
     for (speed= 255; speed>= 0; speed-= 1) { // goes from 180 degrees to 0 degrees
-        digitalWrite(MOTORPIN1, LOW);
+        analogWrite(MOTORPIN1, 0);
         analogWrite(MOTORPIN2, speed);
-        delay(15);                       // waits 15 ms for the servo to reach the position
+        delay(10);                       // waits 15 ms for the servo to reach the position
     }
 }
 

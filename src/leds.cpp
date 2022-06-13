@@ -1,5 +1,5 @@
 /* 
- * File:      leds.c
+ * File:      leds.cpp
  * Author:    Bruno A. Sorban
  * Date:      11/06/2022
  * Comments:  Controle dos LEDS do alimentador
@@ -27,11 +27,11 @@ void blink_all(int time_ms) {
 
 void beep() {
   digitalWrite(BEEP, HIGH);
-  delay(200);
+  delay(100);
   digitalWrite(BEEP, LOW);
-  delay(200);
+  delay(100);
   digitalWrite(BEEP, HIGH);
-  delay(200);
+  delay(100);
   digitalWrite(BEEP, LOW);
   }
 

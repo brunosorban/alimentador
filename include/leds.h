@@ -15,8 +15,8 @@
 #define LEDVERMELHO 12
 #define LEDAMARELO 14
 #define LEDVERDE 27
-#define BEEP 26
+#define BEEP 13
 
-void blink_all(int time_ms);
+void blink_all(int timeNMNN_ms);
 void beep();
 #endif	/* LEDS_H */
