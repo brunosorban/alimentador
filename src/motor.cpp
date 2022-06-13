@@ -13,49 +13,51 @@
 #include "motor.h"
 #include "leds.h"
 
-void forward_motor(int speed) {
-    analogWrite(MOTORPIN1, speed);
-    analogWrite(MOTORPIN2, 0);
+motor::motor(int pin1, int pin2) {
+    in1 = pin1;
+    in2 = pin2;
+}
+void motor::forward_motor(int speed) {
+    analogWrite(in1, speed);
+    analogWrite(in2, 0);
 }
 
-void backward_motor(int speed) {
-    analogWrite(MOTORPIN1, 0);
+void motor::backward_motor(int speed) {
+    analogWrite(in1, 0);
     delay(100);
-    analogWrite(MOTORPIN2, 255);
+    analogWrite(in2, speed);
 }
 
-void brake_motor() {
-    analogWrite(MOTORPIN1, 255);
-    analogWrite(MOTORPIN2, 255);
-    analogWrite(LEDVERDE, 255);
+void motor::brake_motor() {
+    analogWrite(in1, 255);
+    analogWrite(in2, 255);
     delay(500);
-    analogWrite(MOTORPIN1, 0);
-    analogWrite(MOTORPIN2, 0);
-    analogWrite(LEDVERDE, 0);
+    analogWrite(in1, 0);
+    analogWrite(in2, 0);
     delay(500);
 }
 
-void sweep_motor() {
+void motor::sweep_motor() {
     int speed;
 
     for (speed = 0; speed<= 255; speed+= 1) { // goes from 0 degrees to 180 degrees
-        analogWrite(MOTORPIN1, speed);
-        analogWrite(MOTORPIN2, 0);
+        analogWrite(in1, speed);
+        analogWrite(in2, 0);
         delay(10);                       // waits 15 ms for the servo to reach the position
     }
     for (speed= 255; speed>= 0; speed-= 1) { // goes from 180 degrees to 0 degrees
-        analogWrite(MOTORPIN1, speed);
-        analogWrite(MOTORPIN2, 0);
+        analogWrite(in1, speed);
+        analogWrite(in2, 0);
         delay(10);                       // waits 15 ms for the servo to reach the position
     }
     for (speed= 0; speed<= 255; speed+= 1) { // goes from 180 degrees to 0 degrees
-        analogWrite(MOTORPIN1, 0);
-        analogWrite(MOTORPIN2, speed);
+        analogWrite(in1, 0);
+        analogWrite(in2, speed);
         delay(10);                       // waits 15 ms for the servo to reach the position
     }
     for (speed= 255; speed>= 0; speed-= 1) { // goes from 180 degrees to 0 degrees
-        analogWrite(MOTORPIN1, 0);
-        analogWrite(MOTORPIN2, speed);
+        analogWrite(in1, 0);
+        analogWrite(in2, speed);
         delay(10);                       // waits 15 ms for the servo to reach the position
     }
 }

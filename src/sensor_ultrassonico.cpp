@@ -10,11 +10,19 @@
 #define	SENSORES_C
 
 #include <Arduino.h>
-#include "sensores.h"
+#include "sensor_ultrassonico.h"
+#include <Ultrasonic.h>
 
-Ultrasonic ultrasonic_sensor(pino_trigger, pino_echo);
+// sensor_ultrassonico::sensor_ultrassonico(int echo_pin, int trigger_pin) 
+// {
+//     echo_pin = echo_pin;
+//     trigger_pin = trigger_pin;
+//     Ultrasonic ultrasonic(trigger_pin, echo_pin);
+//     ultrasonic_sensor = ultrasonic;
+// }
 
-float get_ultrasonic() {
+float sensor_ultrassonico::get_ultrasonic() 
+{
     float distance = ultrasonic_sensor.read();
     float distanceCM = distance / 10; // obter formula de conversao
     return distanceCM;

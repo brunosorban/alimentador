@@ -17,6 +17,16 @@
 #define LEDVERDE 27
 #define BEEP 13
 
-void blink_all(int timeNMNN_ms);
-void beep();
+class leds {
+    private:
+        int pino;
+
+    public:
+        leds(int pin); // funcao construtura, chamada quando a classe é criada
+        void blink(int time_ms);
+        void beep();
+};
+
+// void blink_all(int timeNMNN_ms);
+// void beep();
 #endif	/* LEDS_H */
