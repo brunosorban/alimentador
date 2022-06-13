@@ -1,36 +1,43 @@
 #include <Arduino.h>
 #include "leds.h"
 #include "motor.h"
-#include "sensores.h"
+#include "sensor_ultrassonico.h"
 #include <Ultrasonic.h>
 
 float dist_CM;
 
-void setup() {
-  // Configura pinos como output
-  pinMode(BEEP, OUTPUT);
-  pinMode(ONBOARD_LED, OUTPUT);
-  pinMode(LEDVERMELHO, OUTPUT);
-  pinMode(LEDAMARELO, OUTPUT);
-  pinMode(LEDVERDE, OUTPUT);
-  pinMode(MOTORPIN1, OUTPUT);
-  pinMode(MOTORPIN2, OUTPUT);
+// Cria os objetos LED
+leds led_vermelho(LEDVERMELHO);
+leds led_amarelo(LEDAMARELO);
+leds led_verde(LEDVERDE);
+leds led_azul(ONBOARD_LED);
 
+// Cria objeto motor
+motor motor_fuso(MOTORPIN1, MOTORPIN2);
+
+// Cria sensor ultrassonico
+sensor_ultrassonico sensor(PINO_TRIGGER, PINO_ECCHO);
+
+void setup() {
   // Chama funções de teste
-  blink_all(500);
-  // sweep_motor();
-  beep();
+  led_vermelho.blink(500);
+  led_amarelo.blink(500);
+  led_verde.blink(500);
+  led_azul.blink(500);
+  motor_fuso.sweep_motor();
+  // beep();
 
   // Inicializa Porta serial
   Serial.begin(9600);
-  Serial.println("Lendo dados do sensor...");
 }
 
 void loop() {
+  led_vermelho.blink(500);
   // obtem ultrassom
-  dist_CM = get_ultrasonic();
+  dist_CM = sensor.get_ultrasonic();
   
-  //Exibe informacoes no serial monitor
+  // Exibe informacoes no serial monitor
   Serial.print("\nDistancia em cm: ");
   Serial.print(dist_CM);
+  delay(1000);
 }

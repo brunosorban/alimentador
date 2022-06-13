@@ -12,16 +12,16 @@
 #include <Arduino.h>
 #include "leds.h"
 
-void blink_all(int time_ms) {
-    digitalWrite(ONBOARD_LED, HIGH);
-    digitalWrite(LEDVERMELHO, HIGH);
-    digitalWrite(LEDAMARELO, HIGH);
-    digitalWrite(LEDVERDE, HIGH);
+leds::leds(int pin)
+{
+  pino = pin;
+  pinMode(pino, OUTPUT);
+}
+
+void leds::blink(int time_ms) {
+    digitalWrite(pino, HIGH);
     delay(time_ms);
-    digitalWrite(ONBOARD_LED, LOW);
-    digitalWrite(LEDVERMELHO, LOW);
-    digitalWrite(LEDAMARELO, LOW);
-    digitalWrite(LEDVERDE, LOW);
+    digitalWrite(pino, LOW);
     delay(time_ms);
 }
 
