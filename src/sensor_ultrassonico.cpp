@@ -1,4 +1,4 @@
-/* 
+/*
  * File:      sensores.cpp
  * Author:    Bruno A. Sorban
  * Date:      12/06/2022
@@ -7,25 +7,29 @@
  */
 
 #ifndef SENSORES_C
-#define	SENSORES_C
+#define SENSORES_C
 
 #include <Arduino.h>
 #include "sensor_ultrassonico.h"
 #include <Ultrasonic.h>
 
-// sensor_ultrassonico::sensor_ultrassonico(int echo_pin, int trigger_pin) 
-// {
-//     echo_pin = echo_pin;
-//     trigger_pin = trigger_pin;
-//     Ultrasonic ultrasonic(trigger_pin, echo_pin);
-//     ultrasonic_sensor = ultrasonic;
-// }
-
-float sensor_ultrassonico::get_ultrasonic() 
+sensor_ultrassonico::sensor_ultrassonico(int echo_pin, int trigger_pin)
 {
-    float distance = ultrasonic_sensor.read();
+    echo_pin = echo_pin;
+    trigger_pin = trigger_pin;
+    ultrasonic_sensor = new Ultrasonic(trigger_pin, echo_pin);
+}
+
+float sensor_ultrassonico::get_ultrasonic()
+{
+    float distance = ultrasonic_sensor->read();
     float distanceCM = distance / 10; // obter formula de conversao
     return distanceCM;
 }
 
-#endif	/* SENSORES_C */
+sensor_ultrassonico::~sensor_ultrassonico()
+{
+    delete ultrasonic_sensor;
+}
+
+#endif /* SENSORES_C */

@@ -22,8 +22,9 @@ class sensor_ultrassonico {
         int trigger_pin;
     
     public:
-        sensor_ultrassonico(int echo_pin, int trigger_pin): ultrasonic_sensor(echo_pin,trigger_pin) {};
-        Ultrasonic ultrasonic_sensor;
+        sensor_ultrassonico(int echo_pin, int trigger_pin);
+        ~sensor_ultrassonico();
+        Ultrasonic* ultrasonic_sensor = nullptr;
         float get_ultrasonic();
 
 };
