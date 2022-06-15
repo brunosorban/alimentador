@@ -62,4 +62,12 @@ void motor::sweep_motor() {
     }
 }
 
+void motor::partida(int desired_speed) {
+    int speed;
+        for (speed = 0; speed<= desired_speed; speed+= 1) { // goes from 0 degrees to 180 degrees
+        analogWrite(in1, speed);
+        analogWrite(in2, 0);
+        delay(10);                       // waits 15 ms for the servo to reach the position
+    }
+}
 #endif	/* MOTOR_C */
