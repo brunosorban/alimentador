@@ -12,6 +12,7 @@
 
 float dist_CM;
 double peso;
+int num_pesagens = 2;
 
 // Cria os objetos LED eo Beep
 leds led_vermelho(LEDVERMELHO);
@@ -58,23 +59,28 @@ void setup() {
 
 void loop() {
   // // obtem ultrassom
-  // dist_CM = sensor_u.get_ultrasonic();
-  // peso = bal.measure();
+  dist_CM = sensor_u.get_ultrasonic();
+
+  peso = 0.0;
+  //calcula media de 10 leituras
+  for(int i = 0; i < num_pesagens; i++) {
+    peso = peso + bal.measure()/num_pesagens;
+  }
   // motor_fuso.forward_motor(VEL);
   
   // // Exibe informacoes no serial monitor
-  // Serial.print("\nDistancia em cm: ");
-  // Serial.print(dist_CM);
-  // Serial.print("\nPeso: ");
-  // Serial.print(peso);
-  // Serial.print("g");
-  for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
-    // in steps of 1 degree
-    myservo.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(7);                       // waits 15ms for the servo to reach the position
-  }
-  for (pos = 180; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
-    myservo.write(pos);              // tell servo to go to position in variable 'pos'
-    delay(7);                       // waits 15ms for the servo to reach the position
-  }
+  Serial.print("\nDistancia em cm: ");
+  Serial.print(dist_CM);
+  Serial.print("\nPeso: ");
+  Serial.print(peso);
+  Serial.print("g");
+//   for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
+//     // in steps of 1 degree
+//     myservo.write(pos);              // tell servo to go to position in variable 'pos'
+//     delay(7);                       // waits 15ms for the servo to reach the position
+//   }
+//   for (pos = 180; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
+//     myservo.write(pos);              // tell servo to go to position in variable 'pos'
+//     delay(7);                       // waits 15ms for the servo to reach the position
+//   }
 }

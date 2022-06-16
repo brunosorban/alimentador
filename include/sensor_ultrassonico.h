@@ -13,8 +13,8 @@
 #include <Ultrasonic.h>
 
 //Define os pinos para o trigger e echo
-#define PINO_TRIGGER 25
-#define PINO_ECCHO 26
+#define PINO_TRIGGER 33
+#define PINO_ECCHO 32
 
 class sensor_ultrassonico {
     private:

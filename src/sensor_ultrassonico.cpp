@@ -6,9 +6,6 @@
  * Revision history:
  */
 
-#ifndef SENSORES_C
-#define	SENSORES_C
-
 #include <Arduino.h>
 #include "sensor_ultrassonico.h"
 #include <Ultrasonic.h>
@@ -32,5 +29,3 @@ sensor_ultrassonico::~sensor_ultrassonico()
 {
     delete ultrasonic_sensor;
 }
-
-#endif	/* SENSORES_C */
