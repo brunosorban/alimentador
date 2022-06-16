@@ -25,6 +25,7 @@ class motor {
         void backward_motor(int speed);
         void brake_motor();
         void sweep_motor();
+        void partida(int desired_speed);
 };
 
 #endif	/* MOTOR_H */

@@ -17,6 +17,7 @@ sensor_ultrassonico::sensor_ultrassonico(int echo_pin, int trigger_pin)
 {
     echo_pin = echo_pin;
     trigger_pin = trigger_pin;
+
     ultrasonic_sensor = new Ultrasonic(trigger_pin, echo_pin);
 }
 

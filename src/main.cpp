@@ -1,171 +1,84 @@
+#include <ESP32Servo.h>
 #include <Arduino.h>
 #include "leds.h"
 #include "motor.h"
 #include "sensor_ultrassonico.h"
+#include "balanca.h"
 #include <Ultrasonic.h>
-#include "Wifi.h"
+#include "HX711.h"
+
+#define VEL 255
+#define SERVO_PIN 32
 
 float dist_CM;
+double peso;
 
-// Cria os objetos LED
+// Cria os objetos LED eo Beep
 leds led_vermelho(LEDVERMELHO);
 leds led_amarelo(LEDAMARELO);
 leds led_verde(LEDVERDE);
 leds led_azul(ONBOARD_LED);
+leds beep(BEEP);
 
 // Cria objeto motor
-motor motor_fuso(MOTORPIN1, MOTORPIN2);
+// motor motor_fuso(MOTORPIN1, MOTORPIN2);
+Servo myservo;
+int pos = 0;
 
-// Cria sensor ultrassonico
-sensor_ultrassonico sensor(PINO_TRIGGER, PINO_ECCHO);
+// Cria objeto sensor ultrassonico
+sensor_ultrassonico sensor_u(PINO_TRIGGER, PINO_ECCHO);
 
-void setup() {
-  // Chama funções de teste
-  led_vermelho.blink(500);
-  led_amarelo.blink(500);
-  led_verde.blink(500);
-  led_azul.blink(500);
-  motor_fuso.sweep_motor();
-  // beep();
+// Cria objeto balança
+balanca bal(DT_BALANCA, SCK_BALANCA);
 
-  // Inicializa Porta serial
-  Serial.begin(9600);
-}
-
-void loop() {
-
-  led_vermelho.blink(500);
-  // obtem ultrassom
-  dist_CM = sensor.get_ultrasonic();
-
-  // Exibe informacoes no serial monitor
-  Serial.print("\nDistancia em cm: ");
-  Serial.print(dist_CM);
-  motor_fuso.sweep_motor();
-  delay(1000);
-}
-
-/*
-//AKfycbyjRhrrYGSFyfo5epdLldAqU4y7oYmSmSmYGIv1fszldozsuzS6yQXY7aG26jXT5tPq
-
-//https://script.google.com/macros/s/AKfycbyjRhrrYGSFyfo5epdLldAqU4y7oYmSmSmYGIv1fszldozsuzS6yQXY7aG26jXT5tPq/exec
-//Include required libraries
-#include "WiFi.h"
-#include <HTTPClient.h>
-#include "time.h"
-const char* ntpServer = "pool.ntp.org";
-const long  gmtOffset_sec = 19800;
-const int   daylightOffset_sec = 0;
-// WiFi credentials
-const char* ssid = "Thiago's phone";         // change SSID
-const char* password = "Thiago1202";    // change password
-// Google script ID and required credentials
-String GOOGLE_SCRIPT_ID = "AKfycbyjRhrrYGSFyfo5epdLldAqU4y7oYmSmSmYGIv1fszldozsuzS6yQXY7aG26jXT5tPq";    // change Gscript ID
-int count = 0;
-void setup() {
-delay(1000);
-Serial.begin(9600);
-delay(1000);
-// connect to WiFi
-Serial.println();
-Serial.print("Connecting to wifi: ");
-Serial.println(ssid);
-Serial.flush();
-WiFi.begin(ssid, password);
-while (WiFi.status() != WL_CONNECTED) {
-  delay(500);
-  Serial.print(".");
-}
-// Init and get the time
-configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-}
-void loop() {
- if (WiFi.status() == WL_CONNECTED) {
-  static bool flag = false;
-  struct tm timeinfo;
-  if (!getLocalTime(&timeinfo)) {
-    Serial.println("Failed to obtain time");
-    return;
-  }
-  char timeStringBuff[50]; //50 chars should be enough
-  strftime(timeStringBuff, sizeof(timeStringBuff), "%A, %B %d %Y %H:%M:%S", &timeinfo);
-  String asString(timeStringBuff);
-  asString.replace(" ", "-");
-  Serial.print("Time:");
-  Serial.println(asString);
-  String urlFinal = "https://script.google.com/macros/s/"+GOOGLE_SCRIPT_ID+"/exec?"+"date=" + asString + "&sensor=" + String(count);
-  Serial.print("POST data to spreadsheet:");
-  Serial.println(urlFinal);
-  HTTPClient http;
-  http.begin(urlFinal.c_str());
-  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
-  int httpCode = http.GET();
-  Serial.print("HTTP Status Code: ");
-  Serial.println(httpCode);
-  //---------------------------------------------------------------------
-  //getting response from google sheet
-  String payload;
-  if (httpCode > 0) {
-      payload = http.getString();
-      Serial.println("Payload: "+payload);
-  }
-  //---------------------------------------------------------------------
-  http.end();
-}
-count++;
-delay(1000);
-}
-/*
-//AKfycbx5Qx0RqhFYL1m2RVrk-OMclYaoDWF_WvjWUA49g46ENKJDQaALN8cylvcidaAbD6fY
-//https://script.google.com/macros/s/AKfycbx5Qx0RqhFYL1m2RVrk-OMclYaoDWF_WvjWUA49g46ENKJDQaALN8cylvcidaAbD6fY/exec
-
-// Include required libraries
-#include "WiFi.h"
-#include <HTTPClient.h>
-// WiFi credentials
-const char *ssid = "Thiago's Phone"; // change SSID
-const char *password = "Thiago1202"; // change password
-// Google script ID and required credentials
-String GOOGLE_SCRIPT_ID = "AKfycbx5Qx0RqhFYL1m2RVrk-OMclYaoDWF_WvjWUA49g46ENKJDQaALN8cylvcidaAbD6fY"; // change Gscript ID
 void setup()
 {
-  delay(1000);
-  Serial.begin(115200);
-  delay(1000);
-  // connect to WiFi
-  Serial.println();
-  Serial.print("Connecting to wifi: ");
-  Serial.println(ssid);
-  Serial.flush();
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(500);
-    Serial.print(".");
-  }
+  // Chama funções de teste
+  led_vermelho.blink(200);
+  led_amarelo.blink(200);
+  led_verde.blink(200);
+  led_azul.blink(200);
+  // motor_fuso.sweep_motor();
+  beep.beep();
+  // motor_fuso.partida(VEL);
+
+  // Allow allocation of all timers
+  ESP32PWM::allocateTimer(0);
+  ESP32PWM::allocateTimer(1);
+  ESP32PWM::allocateTimer(2);
+  ESP32PWM::allocateTimer(3);
+  myservo.setPeriodHertz(50);            // standard 50 hz servo
+  myservo.attach(SERVO_PIN, 1000, 2000); // attaches the servo on pin 18 to the servo object
+                                         // using default min/max of 1000us and 2000us
+                                         // different servos may require different min/max settings
+                                         // for an accurate 0 to 180 sweep
+
+  // Inicializa Porta serial
+  Serial.begin(19200);
 }
+
 void loop()
 {
-  if (WiFi.status() == WL_CONNECTED)
-  {
-    HTTPClient http;
-    String url = "https://script.google.com/macros/s/" + GOOGLE_SCRIPT_ID + "/exec?read";
-    Serial.println("Making a request");
-    http.begin(url.c_str()); // Specify the URL and certificate
-    http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
-    int httpCode = http.GET();
-    String payload;
-    if (httpCode > 0)
-    { // Check for the returning code
-      payload = http.getString();
-      Serial.println(httpCode);
-      Serial.println(payload);
-    }
-    else
-    {
-      Serial.println("Error on HTTP request");
-    }
-    http.end();
+  // // obtem ultrassom
+  // dist_CM = sensor_u.get_ultrasonic();
+  // peso = bal.measure();
+  // motor_fuso.forward_motor(VEL);
+
+  // // Exibe informacoes no serial monitor
+  // Serial.print("\nDistancia em cm: ");
+  // Serial.print(dist_CM);
+  // Serial.print("\nPeso: ");
+  // Serial.print(peso);
+  // Serial.print("g");
+  for (pos = 0; pos <= 180; pos += 1)
+  { // goes from 0 degrees to 180 degrees
+    // in steps of 1 degree
+    myservo.write(pos); // tell servo to go to position in variable 'pos'
+    delay(7);           // waits 15ms for the servo to reach the position
   }
-  delay(1000);
-}*/
+  for (pos = 180; pos >= 0; pos -= 1)
+  {                     // goes from 180 degrees to 0 degrees
+    myservo.write(pos); // tell servo to go to position in variable 'pos'
+    delay(7);           // waits 15ms for the servo to reach the position
+  }
+}

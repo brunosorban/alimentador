@@ -27,6 +27,4 @@ class leds {
         void beep();
 };
 
-// void blink_all(int timeNMNN_ms);
-// void beep();
 #endif	/* LEDS_H */
