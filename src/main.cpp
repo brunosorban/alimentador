@@ -6,6 +6,8 @@
 #include "balanca.h"
 #include <Ultrasonic.h>
 #include "HX711.h"
+#include "Wifi.h"
+#include <HTTPClient.h>
 
 #define SERVO_PIN 21
 
@@ -20,8 +22,15 @@ leds led_verde(LEDVERDE);
 leds led_azul(ONBOARD_LED);
 leds beep(BEEP);
 
-// Cria objeto motor
-// motor motor_fuso(MOTORPIN1, MOTORPIN2);
+const char * ssid = "GUERREIRO_NET";
+const char * password = "50825084";
+
+// const char * ssid = "ARIEL S21FE";
+// const char * password = "polipoli";
+String google_script_leitura = "AKfycbw-SfekyBnNRGDhMqtjtv5f6iv7ovYjpLPN2ySiLwsMIL1W3SIv_8LyXqRGtzfUjUZNuA";
+String google_script_escrita = "AKfycbw-7RdeFdl6DQRVcXVVRC9Cza6fPADGxR_KC1Itf4e46lv0er385I63jP74fcNU4iTw";
+
+
 Servo myservo;
 int pos = 0;
 
@@ -31,7 +40,28 @@ sensor_ultrassonico sensor_u(PINO_TRIGGER, PINO_ECCHO);
 // Cria objeto balança
 balanca bal(DT_BALANCA, SCK_BALANCA);
 
-servo servoMot(SERVO_PIN);
+//servo servoMot(SERVO_PIN);
+
+
+void sendData(String dado, String time ) {
+  HTTPClient http;
+  String url="https://script.google.com/macros/s/"+google_script_escrita+"/exec?" + "date=" + time + "&sensor=" + dado;
+  //Serial.print(url);
+  Serial.print("Making a request");
+  Serial.println();
+  http.begin(url.c_str()); //Specify the URL and certificate
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+  int httpCode = http.GET();  
+
+  String payload;
+    if (httpCode > 0) {
+        payload = http.getString();
+        Serial.println(httpCode);    
+    }
+  http.end();
+}
+
+
 
 void setup() {
   // Chama funções de teste
@@ -43,17 +73,29 @@ void setup() {
   beep.beep();
   // motor_fuso.partida(VEL);
 
-	// Allow allocation of all timers
-	ESP32PWM::allocateTimer(0);
-	ESP32PWM::allocateTimer(1);
-	ESP32PWM::allocateTimer(2);
-	ESP32PWM::allocateTimer(3);
+	// // Allow allocation of all timers
+	// ESP32PWM::allocateTimer(0);
+	// ESP32PWM::allocateTimer(1);
+	// ESP32PWM::allocateTimer(2);
+	// ESP32PWM::allocateTimer(3);
 	// for an accurate 0 to 180 sweep
-  servoMot.sweep();
+ // servoMot.sweep();
 
   // Inicializa Porta serial
   Serial.begin(19200);
+
+  Serial.println();
+  Serial.print("Connecting to wifi: ");
+  Serial.println(ssid);
+  Serial.flush();
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED)
+  {
+    delay(500);
+    Serial.print(".");
+  }
 }
+
 
 void loop() {
   // // obtem ultrassom
@@ -64,26 +106,43 @@ void loop() {
   for(int i = 0; i < num_pesagens; i++) {
     peso = peso + bal.measure()/num_pesagens;
   }
-  // motor_fuso.forward_motor(VEL);
+
+  HTTPClient http;
+
+  String url = "https://script.google.com/macros/s/" + google_script_leitura + "/exec?read";
+
+  Serial.print("Começo de requisição\n");
+  http.begin(url.c_str());
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+  int httpCode = http.GET();
+  String payload;
+    if (httpCode > 0) { //Check for the returning code
+        payload = http.getString();
+        
+        //Serial.println(httpCode);
+        Serial.println(payload);
+      }
+    else {
+      Serial.println("Error on HTTP request");
+    }
+	http.end();
+
+  String sensor = (String)peso;
+  String tempo = "10";
+  Serial.println(sensor);
+  sendData(sensor, tempo);
+
+
   
   // // Exibe informacoes no serial monitor
-  Serial.print("\nDistancia em cm: ");
-  Serial.print(dist_CM);
-  Serial.print("\nPeso: ");
-  Serial.print(peso);
-  Serial.print("g");
+  // Serial.print("\nDistancia em cm: ");
+  // Serial.print(dist_CM);
+  // Serial.print("\nPeso: ");
+  // Serial.print(peso);
+  // Serial.print("g");
 
-  servoMot.sweep();
-  delay(100);
-//   for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
-//     // in steps of 1 degree
-//     myservo.write(pos);              // tell servo to go to position in variable 'pos'
-//     delay(7);                       // waits 15ms for the servo to reach the position
-//   }
-//   for (pos = 180; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
-//     myservo.write(pos);              // tell servo to go to position in variable 'pos'
-//     delay(7);                       // waits 15ms for the servo to reach the position
-//   }
+  //servoMot.sweep();
+  delay(3000);
 
 }
 
