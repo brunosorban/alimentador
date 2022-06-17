@@ -40,7 +40,7 @@ sensor_ultrassonico sensor_u(PINO_TRIGGER, PINO_ECCHO);
 // Cria objeto balança
 balanca bal(DT_BALANCA, SCK_BALANCA);
 
-//servo servoMot(SERVO_PIN);
+servo servoMot(SERVO_PIN);
 
 
 void sendData(String dado, String time ) {
@@ -74,12 +74,11 @@ void setup() {
   // motor_fuso.partida(VEL);
 
 	// // Allow allocation of all timers
-	// ESP32PWM::allocateTimer(0);
-	// ESP32PWM::allocateTimer(1);
-	// ESP32PWM::allocateTimer(2);
-	// ESP32PWM::allocateTimer(3);
+	ESP32PWM::allocateTimer(0);
+	ESP32PWM::allocateTimer(1);
+	ESP32PWM::allocateTimer(2);
+	ESP32PWM::allocateTimer(3);
 	// for an accurate 0 to 180 sweep
- // servoMot.sweep();
 
   // Inicializa Porta serial
   Serial.begin(19200);
@@ -141,7 +140,7 @@ void loop() {
   // Serial.print(peso);
   // Serial.print("g");
 
-  //servoMot.sweep();
+  servoMot.sweep();
   delay(3000);
 
 }
