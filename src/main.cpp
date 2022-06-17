@@ -83,8 +83,7 @@ void loop() {
     peso = peso + bal.measure()/num_pesagens;
   }
 
-
-  Serial.println(readData());
+  Serial.println(readMassasHorarios().massa3);
 
   String sensor = (String)peso;
   String tempo = "10";
@@ -104,7 +103,7 @@ void loop() {
   // Serial.print("g");
 
   servoMot.sweep();
-  delay(10000);
+  delay(30000);
 
 }
 
