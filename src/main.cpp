@@ -8,6 +8,7 @@
 #include "HX711.h"
 #include "Wifi.h"
 #include <HTTPClient.h>
+#include "time.h"
 
 #define SERVO_PIN 21
 
@@ -29,6 +30,11 @@ const char * password = "50825084";
 // const char * password = "polipoli";
 String google_script_leitura = "AKfycbw-SfekyBnNRGDhMqtjtv5f6iv7ovYjpLPN2ySiLwsMIL1W3SIv_8LyXqRGtzfUjUZNuA";
 String google_script_escrita = "AKfycbw-7RdeFdl6DQRVcXVVRC9Cza6fPADGxR_KC1Itf4e46lv0er385I63jP74fcNU4iTw";
+
+//necessarias para o tempo
+const char* ntpServer = "pool.ntp.org";
+const long gmtOffset_sec = -3 * 60 * 60;
+const int daylightOffset_sec = 0;  
 
 
 Servo myservo;
@@ -62,6 +68,17 @@ void sendData(String dado, String time ) {
 }
 
 
+int getTimeSec() {
+  struct tm timeinfo;
+  if(getLocalTime(&timeinfo)) {
+    Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
+    return timeinfo.tm_hour * 60 + timeinfo.tm_min;
+  } else {
+    Serial.println("Failed to obtain time");
+    return 0;
+  }
+}
+
 
 void setup() {
   // Chama funções de teste
@@ -93,6 +110,10 @@ void setup() {
     delay(500);
     Serial.print(".");
   }
+  Serial.println("");
+  Serial.println("WiFi connected.");
+
+  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
 }
 
 
@@ -131,7 +152,10 @@ void loop() {
   Serial.println(sensor);
   sendData(sensor, tempo);
 
-
+  int tempo_min = getTimeSec();
+  Serial.print("Minutos desde a meia noite: ");
+  Serial.print(tempo_min);
+  Serial.println();
   
   // // Exibe informacoes no serial monitor
   // Serial.print("\nDistancia em cm: ");
