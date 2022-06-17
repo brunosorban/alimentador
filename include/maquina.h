@@ -35,4 +35,6 @@
 #define A06  5
 #define A07  6
 
+int determinaEvento();
+
 #endif
