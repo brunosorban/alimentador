@@ -54,7 +54,7 @@ horarios readMassasHorarios() {
     HTTPClient http;
   String url = "https://script.google.com/macros/s/" + google_script_leitura + "/exec?read";
 
-  Serial.print("Começo de requisição\n");
+  Serial.print("Buscando horarios\n");
   http.begin(url.c_str());
   http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
   int httpCode = http.GET();
@@ -85,6 +85,7 @@ horarios readMassasHorarios() {
     horariosUsuario.horario3 = doc["tres"][0];
     horariosUsuario.massa3 = doc["tres"][1];
 
+    Serial.println("Horarios recebidos");
     return horariosUsuario;
 }    
 

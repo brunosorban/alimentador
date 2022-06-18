@@ -9,14 +9,16 @@
 #include "comunicacao_wifi.h"
 #include "maquina.h"
 
+/**********************************************
+                   Definicoes
+**********************************************/
 #define DIST_TRESH 10 //distancia em cm que considera deteccao
 #define SERVO_PIN 21
 
-float dist_CM;
-double peso;
-int num_pesagens = 2;
-int deposicao_realizada = 0;
 
+/**********************************************
+              Criacao dos objetos
+**********************************************/
 // Cria os objetos LED eo Beep
 leds led_vermelho(LEDVERMELHO);
 leds led_amarelo(LEDAMARELO);
@@ -24,16 +26,22 @@ leds led_verde(LEDVERDE);
 leds led_azul(ONBOARD_LED);
 leds beep(BEEP);
 
-
 // Cria objeto balança
 balanca bal(DT_BALANCA, SCK_BALANCA);
 
 // Cria objeto servomotor
 servo servoMot(SERVO_PIN);
 
-// Cria objeto horarios
-horarios horariosUsuario;
 
+
+/**********************************************
+             Variaveis Globais
+**********************************************/
+float dist_CM;
+double peso;
+int num_pesagens = 2;
+horarios horariosUsuario;
+int horario_desejado;
 
 //variaveis globais usadas na maquina de estados
 double massa_atual;
@@ -43,6 +51,16 @@ double massa_necessaria;
 int deposicao_realizada; //determina que a deposicao foi realizada
 int horario_atual; //guarda o horario atual (minutos desde as 00h)
 
+int acao_matrizTransicao[NUM_ESTADOS][NUM_EVENTOS];
+int proximoestado_matrizTransicao[NUM_ESTADOS][NUM_EVENTOS];
+int estado;
+int codigoAcao = NENHUMA_ACAO;
+int codigoEvento = NENHUM_EVENTO;
+
+
+/**********************************************
+        Funcoes da Maquina de Estados
+**********************************************/
 
 int determinaEvento() {
   float dist_CM;
@@ -70,8 +88,56 @@ int determinaEvento() {
   Serial.printf("Distancia: %f, Peso: %f Horario: %d\n", dist_CM, peso, horario);
   Serial.printf("Deteccao: %d, Massa: %d, Horario: %d\n", sensor_detecta, massa_atingida, horario_atingido);
 
-  return 0;
 
+  return 0;
+}
+
+
+void iniciaMaquinaEstados() {
+  int i;
+  int j;
+
+  for(i = 0; i < NUM_ESTADOS; i++) {
+    for(j = 0; j< NUM_EVENTOS; j++) {
+      acao_matrizTransicao[i][j] = NENHUMA_ACAO;
+      proximoestado_matrizTransicao[i][j] = i;
+    }
+  }
+
+  //setup do idle
+  proximoestado_matrizTransicao[IDLE][DETECTAR] = DETECCAO;
+  acao_matrizTransicao[IDLE][DETECTAR] = A01;
+
+  proximoestado_matrizTransicao[IDLE][ACIONAR] = DEPOSICAO;
+  acao_matrizTransicao[IDLE][ACIONAR] = A02;
+
+  proximoestado_matrizTransicao[IDLE][ATUALIZAR] = IDLE;
+  acao_matrizTransicao[IDLE][ATUALIZAR] = A07;
+
+
+  //setup da deposicao
+  proximoestado_matrizTransicao[DEPOSICAO][DESACIONAR] = IDLE;
+  acao_matrizTransicao[DEPOSICAO][DESACIONAR] = A03;
+  
+  proximoestado_matrizTransicao[DEPOSICAO][DETECTAR] = DETECCAO;
+  acao_matrizTransicao[DEPOSICAO][DETECTAR] = A04;
+
+
+  //setup da deteccao
+  proximoestado_matrizTransicao[DETECCAO][REGISTRAR] = IDLE;
+  acao_matrizTransicao[DETECCAO][REGISTRAR] = A05;
+
+  proximoestado_matrizTransicao[DETECCAO][REGISTRAR_ACIONAR] = DEPOSICAO;
+  acao_matrizTransicao[DETECCAO][REGISTRAR_ACIONAR] = A06;
+}
+
+
+int obterAcao(int estado, int codigoEvento) {
+  return acao_matrizTransicao[estado][codigoEvento];
+}
+
+int obterProximoEstado(int estado, int codigoEvento) {
+  return proximoestado_matrizTransicao[estado][codigoEvento];
 }
 
 
@@ -119,10 +185,19 @@ void executarAcao(int codigoAcao) {
       //reabre porta
       servoMot.open();
       break;
+
+    case A07: //atualiza variaveis internas
+      horariosUsuario = readMassasHorarios();
+      horario_desejado = horariosUsuario.horario1;
+      massa_desejada = horariosUsuario.massa1;
+      break;
   }
 }
 
 
+/**********************************************
+            Inicio do programa
+**********************************************/
 
 void setup() {
 
@@ -150,92 +225,19 @@ void setup() {
   //setup do ultrassonico
   setupUltrassonico();
 
+  //inicio da maquina de estados
+  iniciaMaquinaEstados();
+  estado = IDLE;
+
   //bip para indicar final do setup
   beep.beep();
 }
 
 void loop() {
-  determinaEvento();
-  servoMot.open();
-  delay(1000);
-  servoMot.close();
-  delay(500);
-  
+  if(Serial.available()) {
+    codigoEvento = Serial.parseInt();
+    codigoAcao = obterAcao(estado, codigoEvento);
+    estado = obterProximoEstado(estado, codigoEvento);
+    Serial.printf("Estado: %d Evento: %d Acao: %d\n", estado, codigoEvento, codigoAcao);
+  }
 }
-
-
-
-
-
-
-// void setup() {
-//   // Chama funções de teste
-//   led_vermelho.blink(200);
-//   led_amarelo.blink(200);
-//   led_verde.blink(200);
-//   led_azul.blink(200);
-//   // motor_fuso.sweep_motor();
-//   beep.beep();
-//   // motor_fuso.partida(VEL);
-
-// 	// // Allow allocation of all timers
-// 	ESP32PWM::allocateTimer(0);
-// 	ESP32PWM::allocateTimer(1);
-// 	ESP32PWM::allocateTimer(2);
-// 	ESP32PWM::allocateTimer(3);
-// 	// for an accurate 0 to 180 sweep
-
-//   // Inicializa Porta serial
-//   Serial.begin(19200);
-
-//   Serial.println();
-//   Serial.print("Connecting to wifi: ");
-//   Serial.println(ssid);
-//   Serial.flush();
-//   WiFi.begin(ssid, password);
-//   while (WiFi.status() != WL_CONNECTED)
-//   {
-//     delay(500);
-//     Serial.print(".");
-//   }
-//   Serial.println("");
-//   Serial.println("WiFi connected.");
-
-//   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-// }
-
-
-// void loop() {
-//   // // obtem ultrassom
-//   dist_CM = sensor_u.get_ultrasonic();
-
-//   peso = 0.0;
-//   //calcula media de 10 leituras
-//   for(int i = 0; i < num_pesagens; i++) {
-//     peso = peso + bal.measure()/num_pesagens;
-//   }
-
-//   Serial.println(readMassasHorarios().massa3);
-
-//   String sensor = (String)peso;
-//   String tempo = "10";
-//   Serial.println(sensor);
-//   sendData(sensor, tempo);
-
-//   int tempo_min = getTimeSec();
-//   Serial.print("Minutos desde a meia noite: ");
-//   Serial.print(tempo_min);
-//   Serial.println();
-  
-//   // // Exibe informacoes no serial monitor
-//   // Serial.print("\nDistancia em cm: ");
-//   // Serial.print(dist_CM);
-//   // Serial.print("\nPeso: ");
-//   // Serial.print(peso);
-//   // Serial.print("g");
-
-//   servoMot.sweep();
-//   delay(30000);
-
-// }
-
