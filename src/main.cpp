@@ -7,6 +7,7 @@
 #include "HX711.h"
 #include "time.h"
 #include "comunicacao_wifi.h"
+#include "maquina.h"
 
 #define DIST_TRESH 10 //distancia em cm que considera deteccao
 #define SERVO_PIN 21
@@ -32,6 +33,16 @@ servo servoMot(SERVO_PIN);
 
 // Cria objeto horarios
 horarios horariosUsuario;
+
+
+//variaveis globais usadas na maquina de estados
+double massa_atual;
+double massa_desejada;
+double massa_necessaria;
+
+int deposicao_realizada; //determina que a deposicao foi realizada
+int horario_atual; //guarda o horario atual (minutos desde as 00h)
+
 
 int determinaEvento() {
   float dist_CM;
@@ -62,6 +73,55 @@ int determinaEvento() {
   return 0;
 
 }
+
+
+void executarAcao(int codigoAcao) {
+  switch(codigoAcao)
+  {
+    case A01: //deteccao do animal do idle
+      break;
+
+    case A02: //comeco da deposicao
+      //determina a massa necessaria a ser depositada
+      massa_atual = bal.measure();
+      massa_necessaria = massa_desejada - massa_atual;
+      //abre a porta de deposicao
+      servoMot.open();
+      break;
+
+    case A03: //fim da deposicao
+      servoMot.close();
+      deposicao_realizada = true;
+      break;
+
+    case A04: //detecta, sai da deposicao
+      servoMot.close();
+      massa_atual = bal.measure();
+      
+      //atualiza a massa desejada de acordo com o que ja foi depositado
+      massa_desejada = massa_desejada - massa_atual;
+      break;
+
+    case A05: //registro, vai para o idle
+      horario_atual = getTimeSec();
+      massa_atual = bal.measure();
+      sendData((String)massa_atual, (String)horario_atual);
+      break;
+
+    case A06: //registro, vai para deposicao
+      horario_atual = getTimeSec();
+      massa_atual = bal.measure();
+      sendData((String)massa_atual, (String)horario_atual);
+
+      //determina nova massa necessaria
+      massa_necessaria = massa_desejada - massa_atual;
+      
+      //reabre porta
+      servoMot.open();
+      break;
+  }
+}
+
 
 
 void setup() {
