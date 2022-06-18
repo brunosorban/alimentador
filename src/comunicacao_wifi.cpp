@@ -71,8 +71,6 @@ horarios readMassasHorarios() {
     
     strcpy(json, payload.c_str());
 
-    Serial.print("JSON convertido: ");
-    Serial.println(json);
     DynamicJsonDocument doc(1024);
     deserializeJson(doc, json);
     
@@ -87,7 +85,6 @@ horarios readMassasHorarios() {
     horariosUsuario.horario3 = doc["tres"][0];
     horariosUsuario.massa3 = doc["tres"][1];
 
-    
     return horariosUsuario;
 }    
 
@@ -95,7 +92,7 @@ horarios readMassasHorarios() {
 int getTimeSec() {
   struct tm timeinfo;
   if(getLocalTime(&timeinfo)) {
-    Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
+    //Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");
     return timeinfo.tm_hour * 60 + timeinfo.tm_min;
   } else {
     Serial.println("Failed to obtain time");

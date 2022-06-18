@@ -1,7 +1,6 @@
 #ifndef DEFINICOES_SISTEMA
 #define DEFINICOES_SISTEMA
 
-
 #define true 1
 #define false 0
 
@@ -35,6 +34,5 @@
 #define A06  5
 #define A07  6
 
-int determinaEvento();
 
 #endif
