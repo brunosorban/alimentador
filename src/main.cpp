@@ -151,6 +151,7 @@ void executarAcao(int codigoAcao) {
       //determina a massa necessaria a ser depositada
       massa_atual = bal.measure();
       massa_necessaria = massa_desejada - massa_atual;
+      deposicao_realizada = false;
       //abre a porta de deposicao
       servoMot.open();
       break;
@@ -239,5 +240,6 @@ void loop() {
     codigoAcao = obterAcao(estado, codigoEvento);
     estado = obterProximoEstado(estado, codigoEvento);
     Serial.printf("Estado: %d Evento: %d Acao: %d\n", estado, codigoEvento, codigoAcao);
+    executarAcao(codigoAcao);
   }
 }
