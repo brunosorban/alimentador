@@ -25,14 +25,14 @@ void leds::blink(int time_ms) {
     delay(time_ms);
 }
 
-void beep() {
-  digitalWrite(BEEP, HIGH);
+void leds::beep() {
+  digitalWrite(pino, HIGH);
   delay(100);
-  digitalWrite(BEEP, LOW);
+  digitalWrite(pino, LOW);
   delay(100);
-  digitalWrite(BEEP, HIGH);
+  digitalWrite(pino, HIGH);
   delay(100);
-  digitalWrite(BEEP, LOW);
+  digitalWrite(pino, LOW);
   }
 
 #endif	/* LEDS_C */
