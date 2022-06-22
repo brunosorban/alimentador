@@ -16,9 +16,9 @@
 #define DT_BALANCA 23
 #define ESCALA_BALANCA_NUM 1
 #define ESCALA_BALANCA_DEN 1
-#define COEF_M_INV -1483
-#define COEF_B 1935
-#define TARA 0
+#define COEF_M_INV -1862
+#define COEF_B 873
+#define TARA_POTE 35
 
 class balanca {
     private:

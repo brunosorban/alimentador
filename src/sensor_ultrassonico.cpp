@@ -15,7 +15,7 @@ void setupUltrassonico() {
 }
 
 
-int leituraUltrassonico() {
+float leituraUltrassonico() {
     long duration;
     float distanceCm;
 

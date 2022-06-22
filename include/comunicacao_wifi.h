@@ -26,6 +26,10 @@ typedef struct {
     int massa1;
     int massa2;
     int massa3;
+
+    int horario_array[4];
+    int massa_array[4];
+
 } horarios;
 
 void sendData(String dado, String time);

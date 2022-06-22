@@ -1,14 +1,18 @@
 #include "comunicacao_wifi.h"
+#include "time.h"
 
-const char * ssid = "GUERREIRO_NET";
-const char * password = "50825084";
+// const char * ssid = "GUERREIRO_NET";
+// const char * password = "50825084";
+
+const char * ssid = "Ariel_S21FE";
+const char * password = "polipoli";
 
 //String google_script_leitura = "AKfycbw-SfekyBnNRGDhMqtjtv5f6iv7ovYjpLPN2ySiLwsMIL1W3SIv_8LyXqRGtzfUjUZNuA";
 String google_script_leitura = "AKfycbx95y5vE8FR9Zqb0F6eATDhAlcTmFlUyF80ufQr3irM9_HXP6n-WVxAqievXl4GBZCRcw";
 
 String google_script_escrita = "AKfycbw-7RdeFdl6DQRVcXVVRC9Cza6fPADGxR_KC1Itf4e46lv0er385I63jP74fcNU4iTw";
 
-const char* ntpServer = "pool.ntp.org";
+const char* ntpServer = "br.pool.ntp.org";
 const long gmtOffset_sec = -3 * 60 * 60;
 const int daylightOffset_sec = 0;  
 
@@ -77,15 +81,23 @@ horarios readMassasHorarios() {
     horarios horariosUsuario;
     
     horariosUsuario.horario1 = doc["um"][0];
+    horariosUsuario.horario_array[0] = doc["um"][0];
     horariosUsuario.massa1 = doc["um"][1];
+    horariosUsuario.massa_array[0] = doc["um"][1];
 
     horariosUsuario.horario2 = doc["dois"][0];
+    horariosUsuario.horario_array[1] = doc["dois"][0];
     horariosUsuario.massa2 = doc["dois"][1];
+    horariosUsuario.massa_array[1] = doc["dois"][1];
 
     horariosUsuario.horario3 = doc["tres"][0];
+    horariosUsuario.horario_array[2] = doc["tres"][0];
     horariosUsuario.massa3 = doc["tres"][1];
+    horariosUsuario.massa_array[2] = doc["tres"][1];
 
-    Serial.println("Horarios recebidos");
+    horariosUsuario.horario_array[3] = 9999;
+    horariosUsuario.massa_array[3] = 0;
+    
     return horariosUsuario;
 }    
 

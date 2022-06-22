@@ -4,8 +4,8 @@
 #define true 1
 #define false 0
 
-#define NUM_ESTADOS 3
-#define NUM_EVENTOS 6
+#define NUM_ESTADOS 4
+#define NUM_EVENTOS 7
 
 //estados
 #define IDLE 0
@@ -21,6 +21,7 @@
 #define REGISTRAR 3
 #define REGISTRAR_ACIONAR 4
 #define ATUALIZAR 5
+#define AVISAR 6
 
 //acoes
 #define NENHUMA_ACAO -1
@@ -31,6 +32,7 @@
 #define A05  4
 #define A06  5
 #define A07  6
+#define A08  7
 
 
 #endif
