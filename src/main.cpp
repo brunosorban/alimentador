@@ -19,7 +19,7 @@ leds beep(BEEP);
 servo_esp servo_porta(SERVO_PIN);
 
 // Cria sensor ultrassonico
-sensor_ultrassonico sensor(PINO_TRIGGER, PINO_ECCHO);
+sensor_ultrassonico sensor(PINO_ECCHO, PINO_TRIGGER);
 
 void setup() {
   // Chama funções de teste

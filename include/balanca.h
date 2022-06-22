@@ -12,20 +12,22 @@
 #include <Arduino.h>
 #include "HX711.h"
 
-#define SCK_BALANCA 0
-#define DT_BALANCA 1
-#define ESCALA_BALANCA_NUM 22.1
-#define ESCALA_BALANCA_DEN 45800
+#define SCK_BALANCA 22
+#define DT_BALANCA 23
+#define ESCALA_BALANCA_NUM 197
+#define ESCALA_BALANCA_DEN 288184
+#define TARA -2160
 
 class balanca {
     private:
         int dt;
         int sck;
         double medida;
-        HX711 adc_bal;
 
     public:
         balanca(int dt, int sck);
+        ~balanca();
+        HX711* adc_bal;
         double measure();
 };
 
