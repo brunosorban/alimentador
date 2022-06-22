@@ -209,6 +209,8 @@ void executarAcao(int codigoAcao) {
       //determina nova massa necessaria
       massa_necessaria = massa_desejada - massa_atual;
       
+      horario_inicio_deposicao = getTimeSec();
+      Serial.printf("Deposicao iniciada em %d\n", horario_inicio_deposicao);
       //reabre porta
       servoMot.open();
       flag_deteccao = 0;
