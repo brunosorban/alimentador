@@ -1,29 +1,27 @@
 #ifndef DEFINICOES_SISTEMA
 #define DEFINICOES_SISTEMA
 
-
 #define true 1
 #define false 0
 
-#define NUM_ESTADOS 5
+#define NUM_ESTADOS 4
 #define NUM_EVENTOS 7
 
 //estados
 #define IDLE 0
 #define DEPOSICAO 1
 #define DETECCAO 2
-#define REGISTRO 3
-#define ERRO 4
+#define ERRO 3
 
 //eventos
 #define NENHUM_EVENTO -1
-#define HORARIO 0
-#define SENSOR_PRESENCA_SIM 1
-#define SENSOR_PRESENCA_NAO 2
-#define TEMPORIZADOR 3
-#define MASSA_SIM 4
-#define MASSA_NAO 5
-#define RACAO_SIM 6
+#define DETECTAR 0
+#define ACIONAR 1
+#define DESACIONAR 2
+#define REGISTRAR 3
+#define REGISTRAR_ACIONAR 4
+#define ATUALIZAR 5
+#define AVISAR 6
 
 //acoes
 #define NENHUMA_ACAO -1
@@ -34,5 +32,7 @@
 #define A05  4
 #define A06  5
 #define A07  6
+#define A08  7
+
 
 #endif
