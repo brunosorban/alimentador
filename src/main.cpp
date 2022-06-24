@@ -1,11 +1,8 @@
 #include <ESP32Servo.h>
 #include <Arduino.h>
-// #include "leds.h"
-// #include "servo.h"
 #include "sensor_ultrassonico.h"
 #include "balanca.h"
 #include "HX711.h"
-// #include "time.h"
 #include "comunicacao_wifi.h"
 #include "maquina.h"
 #include "servo_esp.h"
@@ -16,6 +13,8 @@
 #define DIST_TRESH 6 //distancia em cm que considera deteccao
 #define HORARIO_UPDATE 5 //minutos desde as 00h
 #define TEMPO_ERRO 1 //minutos para a deposicao
+#define QUEUE_SIZE 5
+#define INTERVAL 1000
 
 
 /**********************************************
@@ -27,6 +26,8 @@ balanca bal(DT_BALANCA, SCK_BALANCA);
 // Cria objeto servomotor
 servo_esp servoMot(SERVO_PIN);
 
+// Fila do RTOS
+QueueHandle_t xQueue;
 
 
 /**********************************************
@@ -57,9 +58,20 @@ int timer_atualizacao;
 
 
 /**********************************************
+        Declarando os ponteiros para as taks
+**********************************************/
+TaskHandle_t vTaskOpenDoor_t;
+TaskHandle_t vTaskCloseDoor_t;
+TaskHandle_t vTaskStateMachine_t;
+// TaskHandle_t vTasksendData_t;
+// TaskHandle_t vTaskreadData_t;
+// TaskHandle_t vTaskreadMassasHorarios_t;
+// TaskHandle_t vTaskgetTimeSec_t;
+
+
+/**********************************************
         Funcoes da Maquina de Estados
 **********************************************/
-
 int determinaEvento() {
   //obtencao de dados
   dist_cm = leituraUltrassonico();
@@ -67,7 +79,6 @@ int determinaEvento() {
   horario_atual = getTimeSec();
 
   //logica para evento
-
   if(horario_atual < HORARIO_UPDATE) {
     return ATUALIZAR;
   }
@@ -75,32 +86,31 @@ int determinaEvento() {
   if(dist_cm < DIST_TRESH) {
     return DETECTAR;
   }
+
   if(flag_deteccao) {
     if(flag_deposicao) {
       return REGISTRAR_ACIONAR;
-    } else {
+    } 
+    else {
       return REGISTRAR;
     }
   }
+
   if(indice_horario < 3) {
-  if(massa_atual >= horariosUsuario.massa_array[indice_horario]) {
-    return DESACIONAR;
+    if(massa_atual >= horariosUsuario.massa_array[indice_horario]) {
+      return DESACIONAR;
+    }
+
+    if(flag_deposicao && !flag_deteccao && (horario_atual - horario_inicio_deposicao >= TEMPO_ERRO)) {
+      return AVISAR;
+    }
+
+    if(horario_atual >= horariosUsuario.horario_array[indice_horario]) {
+      return ACIONAR;
+    }
   }
-
-  if(flag_deposicao && !flag_deteccao && (horario_atual - horario_inicio_deposicao >= TEMPO_ERRO)) {
-    return AVISAR;
-  }
-
-  if(horario_atual >= horariosUsuario.horario_array[indice_horario]) {
-    return ACIONAR;
-  }
-  }
-
-
-
   return NENHUM_EVENTO;
 }
-
 
 void iniciaMaquinaEstados() {
   int i;
@@ -171,14 +181,14 @@ void executarAcao(int codigoAcao) {
       massa_atual = bal.measure();
       massa_necessaria = massa_desejada - massa_atual;
       //abre a porta de deposicao
-      servoMot.open();
+      vTaskResume(vTaskOpenDoor_t);
       flag_deposicao = 1;
       horario_inicio_deposicao = getTimeSec();
       Serial.printf("Deposicao iniciada em %d\n", horario_inicio_deposicao);
       break;
 
     case A03: //fim da deposicao
-      servoMot.close();
+      vTaskResume(vTaskCloseDoor_t);
       flag_deposicao = 0;
       if(indice_horario < 3) {
         indice_horario++;
@@ -186,7 +196,7 @@ void executarAcao(int codigoAcao) {
       break;
 
     case A04: //detecta, sai da deposicao
-      servoMot.close();
+      vTaskResume(vTaskCloseDoor_t);
       massa_atual = bal.measure();
       
       //atualiza a massa desejada de acordo com o que ja foi depositado
@@ -212,7 +222,7 @@ void executarAcao(int codigoAcao) {
       horario_inicio_deposicao = getTimeSec();
       Serial.printf("Deposicao iniciada em %d\n", horario_inicio_deposicao);
       //reabre porta
-      servoMot.open();
+      vTaskResume(vTaskOpenDoor_t);
       flag_deteccao = 0;
       break;
 
@@ -221,19 +231,74 @@ void executarAcao(int codigoAcao) {
       break;
 
     case A08:
-      servoMot.close();
+      vTaskResume(vTaskCloseDoor_t);
       Serial.println(" ERRO:TEMPO DE DEPOSICAO MAXIMO ATINGIDO ");
       break;
   }
 }
 
+/**********************************************
+            Criando as tasks
+**********************************************/
+void vTaskOpenDoor(void *pvParameters) {
+    for(;;) {
+        servoMot.close();
+        vTaskDelay(pdMS_TO_TICKS(500));
+        vTaskSuspend(vTaskOpenDoor_t);
+    }
+}
+
+void vTaskCloseDoor(void *pvParameters) {
+    for(;;) {
+        servoMot.close();
+        vTaskDelay(pdMS_TO_TICKS(500));
+        vTaskSuspend(vTaskCloseDoor_t);
+    }
+}
+
+void vTaskStateMachine(void *pvParameters) {
+    for(;;) {
+      horario_atual = getTimeSec();
+      if(horario_atual) {
+        Serial.printf("Horario_atual: %d\n", horario_atual);
+        codigoEvento = determinaEvento();
+        codigoAcao = obterAcao(estado, codigoEvento);
+        estado = obterProximoEstado(estado, codigoEvento);
+        Serial.printf("Estado: %d Evento: %d Acao: %d\n", estado, codigoEvento, codigoAcao);
+        executarAcao(codigoAcao);
+        Serial.printf("Indice: %d, Horario: %d\n", indice_horario, horariosUsuario.horario_array[indice_horario]);
+  }
+    }
+}
+
+void vTasksendData(void *pvParameters) {
+    for(;;) {
+
+    }
+}
+
+void vTaskreadData(void *pvParameters) {
+    for(;;) {
+
+    }
+}
+
+void vTaskreadMassasHorarios(void *pvParameters) {
+    for(;;) {
+
+    }
+}
+
+void vTaskgetTimeSec(void *pvParameters) {
+    for(;;) {
+
+    }
+}
 
 /**********************************************
             Inicio do programa
 **********************************************/
-
 void setup() {
-
   Serial.begin(115200);
 
   //inicio da comunicacao wifi
@@ -277,31 +342,25 @@ void setup() {
   }
 
   servoMot.close();
-  
+
+/**********************************************
+        Ativando as Tasks
+**********************************************/
+xQueue = xQueueCreate(QUEUE_SIZE, sizeof(int));
+
+xTaskCreate(vTaskOpenDoor, "vTaskOpenDoor", 100, NULL, 1, &vTaskOpenDoor_t);
+xTaskCreate(vTaskCloseDoor, "vTaskCloseDoor", 100, NULL, 3, &vTaskCloseDoor_t);
+xTaskCreate(vTaskStateMachine, "vTaskStateMachine", 100, NULL, 2, &vTaskStateMachine_t);
+// xTaskCreate(vTasksendData, "vTasksendData", 100, NULL, 1, &vTasksendData_t);
+// xTaskCreate(vTaskreadData, "vTaskreadData", 100, NULL, 1, &vTaskreadData_t);
+// xTaskCreate(vTaskreadMassasHorarios, "vTaskreadMassasHorarios", 100, NULL, 1, &vTaskreadMassasHorarios_t);
+// xTaskCreate(vTaskgetTimeSec, "vTaskgetTimeSec", 100, NULL, 1, &vTaskgetTimeSec_t);
+
+vTaskStartScheduler();
+
+for(;;);
 }
 
 void loop() {
-
-    // codigoEvento = Serial.parseInt();
-  horario_atual = getTimeSec();
-  if(horario_atual) {
-  Serial.printf("Horario_atual: %d\n", horario_atual);
-  codigoEvento = determinaEvento();
-  codigoAcao = obterAcao(estado, codigoEvento);
-  estado = obterProximoEstado(estado, codigoEvento);
-  Serial.printf("Estado: %d Evento: %d Acao: %d\n", estado, codigoEvento, codigoAcao);
-  executarAcao(codigoAcao);
-  Serial.printf("Indice: %d, Horario: %d\n", indice_horario, horariosUsuario.horario_array[indice_horario]);
-  }
-  delay(5000); 
-
-  // Serial.printf("Ultrassonico: %f\n", leituraUltrassonico());
-  // Serial.printf("Balanca: %f\n", bal.measure());
-
-  // bal.measure();
-  // delay(1000);
-  // servoMot.open();
-  // delay(500);
-  // servoMot.close();
-  // delay(1000);
+  // codigoEvento = Serial.parseInt();
 }
