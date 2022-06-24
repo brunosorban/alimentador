@@ -63,10 +63,18 @@ int timer_atualizacao;
 TaskHandle_t vTaskOpenDoor_t;
 TaskHandle_t vTaskCloseDoor_t;
 TaskHandle_t vTaskStateMachine_t;
-// TaskHandle_t vTasksendData_t;
+TaskHandle_t vTasksendData_t;
 // TaskHandle_t vTaskreadData_t;
 // TaskHandle_t vTaskreadMassasHorarios_t;
 // TaskHandle_t vTaskgetTimeSec_t;
+
+typedef struct Data_t
+{
+    String massa_atual;
+    String horario_atual;
+} DataToSend_t;
+
+DataToSend_t data_send;
 
 
 /**********************************************
@@ -207,14 +215,26 @@ void executarAcao(int codigoAcao) {
     case A05: //registro, vai para o idle
       horario_atual = getTimeSec();
       massa_atual = bal.measure();
-      sendData((String)massa_atual, (String)horario_atual);
+
+      // abastece o struct de dados
+      data_send = {massa_atual, horario_atual};
+
+      // ativa a task para enviar os dados que foram inseridos
+      vTaskResume(vTasksendData_t);
+      // sendData((String)massa_atual, (String)horario_atual);
       flag_deteccao = 0;
       break;
 
     case A06: //registro, vai para deposicao
       horario_atual = getTimeSec();
       massa_atual = bal.measure();
-      sendData((String)massa_atual, (String)horario_atual);
+      
+      // abastece o struct de dados
+      data_send = {massa_atual, horario_atual};
+
+      // ativa a task para enviar os dados que foram inseridos
+      vTaskResume(vTasksendData_t);
+      // sendData((String)massa_atual, (String)horario_atual);
 
       //determina nova massa necessaria
       massa_necessaria = massa_desejada - massa_atual;
@@ -273,7 +293,9 @@ void vTaskStateMachine(void *pvParameters) {
 
 void vTasksendData(void *pvParameters) {
     for(;;) {
-
+        DataToSend_t * data = (DataToSend_t *) pvParameters;
+        sendData((String) data->massa_atual, (String)data->horario_atual);
+        vTaskSuspend(vTasksendData_t);
     }
 }
 
@@ -351,7 +373,7 @@ xQueue = xQueueCreate(QUEUE_SIZE, sizeof(int));
 xTaskCreate(vTaskOpenDoor, "vTaskOpenDoor", 100, NULL, 1, &vTaskOpenDoor_t);
 xTaskCreate(vTaskCloseDoor, "vTaskCloseDoor", 100, NULL, 3, &vTaskCloseDoor_t);
 xTaskCreate(vTaskStateMachine, "vTaskStateMachine", 100, NULL, 2, &vTaskStateMachine_t);
-// xTaskCreate(vTasksendData, "vTasksendData", 100, NULL, 1, &vTasksendData_t);
+xTaskCreate(vTasksendData, "vTasksendData", 100, (void *) &data_send, 1, &vTasksendData_t);
 // xTaskCreate(vTaskreadData, "vTaskreadData", 100, NULL, 1, &vTaskreadData_t);
 // xTaskCreate(vTaskreadMassasHorarios, "vTaskreadMassasHorarios", 100, NULL, 1, &vTaskreadMassasHorarios_t);
 // xTaskCreate(vTaskgetTimeSec, "vTaskgetTimeSec", 100, NULL, 1, &vTaskgetTimeSec_t);
