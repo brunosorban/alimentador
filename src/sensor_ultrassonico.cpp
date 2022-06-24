@@ -1,4 +1,4 @@
-/* 
+/*
  * File:      sensores.cpp
  * Author:    Bruno A. Sorban
  * Date:      12/06/2022
@@ -8,14 +8,15 @@
 
 #include <Arduino.h>
 #include "sensor_ultrassonico.h"
-
-void setupUltrassonico() {
+/*
+void setupUltrassonico()
+{
     pinMode(PINO_TRIGGER, OUTPUT); // Sets the trigPin as an Output
-    pinMode(PINO_ECHO, INPUT); // Sets the echoPin as an Input
+    pinMode(PINO_ECHO, INPUT);     // Sets the echoPin as an Input
 }
 
-
-float leituraUltrassonico() {
+float leituraUltrassonico()
+{
     long duration;
     float distanceCm;
 
@@ -28,29 +29,39 @@ float leituraUltrassonico() {
     digitalWrite(PINO_TRIGGER, LOW);
 
     duration = pulseIn(PINO_ECHO, HIGH);
-  
-    // Calculate the distance
-    distanceCm = duration * SOUND_SPEED/2;
 
-    return distanceCm; 
+    // Calculate the distance
+    distanceCm = duration * SOUND_SPEED / 2;
+
+    return distanceCm;
+}
+*/
+sensor_ultrassonico::sensor_ultrassonico(int echo_pin, int trigger_pin)
+{
+    trg = trigger_pin;
+    ech = echo_pin;
+    pinMode(trigger_pin, OUTPUT); // Sets the trigPin as an Output
+    pinMode(echo_pin, INPUT);     // Sets the echoPin as an Input
 }
 
-// sensor_ultrassonico::sensor_ultrassonico(int echo_pin, int trigger_pin) 
-// {
-//     echo_pin = echo_pin;
-//     trigger_pin = trigger_pin;
-    
-//     ultrasonic_sensor = new Ultrasonic(trigger_pin, echo_pin);
-// }
+float sensor_ultrassonico::get_ultrasonic()
+{
+    long duration;
+    float distanceCm;
 
-// float sensor_ultrassonico::get_ultrasonic() 
-// {
-//     float distance = ultrasonic_sensor->read();
-//     float distanceCM = distance / 10; // obter formula de conversao
-//     return distanceCM;
-// }
+    // Clears the PINO_TRIGGER
+    digitalWrite(trg, LOW);
+    delayMicroseconds(2);
 
-// sensor_ultrassonico::~sensor_ultrassonico() 
-// {
-//     delete ultrasonic_sensor;
-// }
+    // Sets the PINO_TRIGGER on HIGH state for 10 micro seconds
+    digitalWrite(trg, HIGH);
+    delayMicroseconds(10);
+    digitalWrite(trg, LOW);
+
+    duration = pulseIn(ech, HIGH);
+
+    // Calculate the distance
+    distanceCm = duration * SOUND_SPEED / 2;
+
+    return distanceCm;
+}

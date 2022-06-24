@@ -27,6 +27,8 @@ balanca bal(DT_BALANCA, SCK_BALANCA);
 // Cria objeto servomotor
 servo_esp servoMot(SERVO_PIN);
 
+sensor_ultrassonico ultraSon(PINO_ECHO,PINO_TRIGGER);
+
 
 
 /**********************************************
@@ -38,6 +40,7 @@ int horario_desejado;
 
 //variaveis globais usadas na maquina de estados
 double massa_atual;
+double massa_consumida;
 double massa_desejada;
 double massa_necessaria;
 
@@ -62,9 +65,9 @@ int timer_atualizacao;
 
 int determinaEvento() {
   //obtencao de dados
-  dist_cm = leituraUltrassonico();
+  dist_cm = ultraSon.get_ultrasonic();
   massa_atual = bal.measure();
-  horario_atual = getTimeSec();
+  horario_atual = getTimeMin();
 
   //logica para evento
 
@@ -173,7 +176,7 @@ void executarAcao(int codigoAcao) {
       //abre a porta de deposicao
       servoMot.open();
       flag_deposicao = 1;
-      horario_inicio_deposicao = getTimeSec();
+      horario_inicio_deposicao = getTimeMin();
       Serial.printf("Deposicao iniciada em %d\n", horario_inicio_deposicao);
       break;
 
@@ -195,21 +198,23 @@ void executarAcao(int codigoAcao) {
       break;
 
     case A05: //registro, vai para o idle
-      horario_atual = getTimeSec();
+      horario_atual = getTimeMin();
+      massa_consumida = bal.measure()-massa_atual;
       massa_atual = bal.measure();
-      sendData((String)massa_atual, (String)horario_atual);
+      sendData((String)massa_consumida, (String)horario_atual);
       flag_deteccao = 0;
       break;
 
     case A06: //registro, vai para deposicao
-      horario_atual = getTimeSec();
+      horario_atual = getTimeMin();
+      massa_consumida = bal.measure()-massa_atual;
       massa_atual = bal.measure();
-      sendData((String)massa_atual, (String)horario_atual);
+      sendData((String)massa_consumida, (String)horario_atual);
 
       //determina nova massa necessaria
       massa_necessaria = massa_desejada - massa_atual;
       
-      horario_inicio_deposicao = getTimeSec();
+      horario_inicio_deposicao = getTimeMin();
       Serial.printf("Deposicao iniciada em %d\n", horario_inicio_deposicao);
       //reabre porta
       servoMot.open();
@@ -235,7 +240,7 @@ void executarAcao(int codigoAcao) {
 void setup() {
 
   Serial.begin(115200);
-
+ /* 
   //inicio da comunicacao wifi
   Serial.print("Conectando no WiFi: ");
   Serial.println(ssid);
@@ -262,7 +267,7 @@ void setup() {
   iniciaMaquinaEstados();
   estado = IDLE;
 
-  horario_atual = getTimeSec();
+  horario_atual = getTimeMin();
   while(horario_atual > horariosUsuario.horario_array[indice_horario]) {
     indice_horario++;
   }
@@ -275,13 +280,15 @@ void setup() {
   for(int i = 0; i  < 3; i++) {
     Serial.println(horariosUsuario.massa_array[i]);
   }
-
+/*
   servoMot.close();
-  
+  */
+  //setupUltrassonico();
+  bal.tarar();
 }
 
 void loop() {
-
+  /*
     // codigoEvento = Serial.parseInt();
   horario_atual = getTimeSec();
   if(horario_atual) {
@@ -294,14 +301,18 @@ void loop() {
   Serial.printf("Indice: %d, Horario: %d\n", indice_horario, horariosUsuario.horario_array[indice_horario]);
   }
   delay(5000); 
+  
 
-  // Serial.printf("Ultrassonico: %f\n", leituraUltrassonico());
-  // Serial.printf("Balanca: %f\n", bal.measure());
+  //Serial.printf("Ultrassonico: %f\n", ultraSon.get_ultrasonic());
+  horario_atual = getTimeMin();
+  if(horario_atual) {
+  Serial.printf("Horario_atual: %d\n", horario_atual);}*/
+  //Serial.printf("Balanca: %f\n", bal.measure());
 
   // bal.measure();
   // delay(1000);
-  // servoMot.open();
-  // delay(500);
-  // servoMot.close();
-  // delay(1000);
+  servoMot.open();
+  delay(500);
+  servoMot.close();
+  delay(1000);
 }
