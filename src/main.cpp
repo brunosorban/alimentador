@@ -9,6 +9,7 @@
 #include "comunicacao_wifi.h"
 #include "maquina.h"
 #include "servo_esp.h"
+#include"motor_vibra.h"
 
 /**********************************************
                    Definicoes
@@ -26,6 +27,8 @@ balanca bal(DT_BALANCA, SCK_BALANCA);
 
 // Cria objeto servomotor
 servo_esp servoMot(SERVO_PIN);
+
+motor_vibra vibMot(MOTVIB_PIN);
 
 sensor_ultrassonico ultraSon(PINO_ECHO,PINO_TRIGGER);
 
@@ -284,7 +287,7 @@ void setup() {
   servoMot.close();
   */
   //setupUltrassonico();
-  bal.tarar();
+  //bal.tarar();
 }
 
 void loop() {
@@ -311,8 +314,11 @@ void loop() {
 
   // bal.measure();
   // delay(1000);
-  servoMot.open();
-  delay(500);
-  servoMot.close();
+  //servoMot.open();
+  //delay(500);
+  //servoMot.close();
+  vibMot.On();
+  delay(10000);
+  vibMot.Off();
   delay(1000);
 }
