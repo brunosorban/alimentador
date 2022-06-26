@@ -1,5 +1,10 @@
 #include <ESP32Servo.h>
 #include <Arduino.h>
+//#include <FreeRTOS.h>
+//#include <queue.h>
+//#include <semphr.h>
+//#include <task.h>
+
 // #include "leds.h"
 // #include "servo.h"
 #include "sensor_ultrassonico.h"
@@ -14,7 +19,7 @@
 /**********************************************
                    Definicoes
 **********************************************/
-#define DIST_TRESH 6 //distancia em cm que considera deteccao
+#define DIST_TRESH 25 //distancia em cm que considera deteccao
 #define HORARIO_UPDATE 5 //minutos desde as 00h
 #define TEMPO_ERRO 1 //minutos para a deposicao
 
@@ -70,6 +75,14 @@ int determinaEvento() {
   //obtencao de dados
   dist_cm = ultraSon.get_ultrasonic();
   massa_atual = bal.measure();
+  Serial.print("------------------------------\n");
+  Serial.print("Massa atual:");
+  Serial.println(massa_atual);
+  //vTaskDelay(100/portTICK_PERIOD_MS);
+  Serial.print("Distancia atual:");
+  Serial.println(dist_cm);
+  Serial.print("------------------------------\n");
+  vTaskDelay(100/portTICK_PERIOD_MS);
   horario_atual = getTimeMin();
 
   //logica para evento
@@ -180,7 +193,7 @@ void executarAcao(int codigoAcao) {
       servoMot.open();
       flag_deposicao = 1;
       horario_inicio_deposicao = getTimeMin();
-      Serial.printf("Deposicao iniciada em %d\n", horario_inicio_deposicao);
+      //Serial.printf("Deposicao iniciada em %d\n", horario_inicio_deposicao);
       break;
 
     case A03: //fim da deposicao
@@ -218,7 +231,7 @@ void executarAcao(int codigoAcao) {
       massa_necessaria = massa_desejada - massa_atual;
       
       horario_inicio_deposicao = getTimeMin();
-      Serial.printf("Deposicao iniciada em %d\n", horario_inicio_deposicao);
+      //Serial.printf("Deposicao iniciada em %d\n", horario_inicio_deposicao);
       //reabre porta
       servoMot.open();
       flag_deteccao = 0;
@@ -230,20 +243,49 @@ void executarAcao(int codigoAcao) {
 
     case A08:
       servoMot.close();
-      Serial.println(" ERRO:TEMPO DE DEPOSICAO MAXIMO ATINGIDO ");
+      //Serial.println(" ERRO:TEMPO DE DEPOSICAO MAXIMO ATINGIDO ");
       break;
   }
 }
 
 
+void taskMaqEst (void* pv){
+  int i;
+  for(;;)
+  {
+    horario_atual = getTimeMin();
+    //Serial.printf("Horario_atual: %d\n", horario_atual);
+    //Serial.printf( "contador:%d\n",i++);
+    
+    if(horario_atual) {
+      Serial.printf("Horario_atual: %d\n", horario_atual);
+      vTaskDelay(100/portTICK_PERIOD_MS);
+
+      codigoEvento = determinaEvento();
+      if(codigoEvento != NENHUM_EVENTO)
+      {
+        codigoAcao = obterAcao(estado, codigoEvento);
+        estado = obterProximoEstado(estado, codigoEvento);
+        Serial.printf("Estado: %d Evento: %d Acao: %d\n", estado, codigoEvento, codigoAcao);
+        vTaskDelay(100/portTICK_PERIOD_MS);
+        executarAcao(codigoAcao);
+        Serial.printf("Indice: %d, Horario: %d\n", indice_horario, horariosUsuario.horario_array[indice_horario]);
+        vTaskDelay(100/portTICK_PERIOD_MS);
+      }
+      
+      
+    }/**/
+  }
+}
 /**********************************************
             Inicio do programa
 **********************************************/
 
-void setup() {
+void setup() 
+{
 
   Serial.begin(115200);
- /* 
+  
   //inicio da comunicacao wifi
   Serial.print("Conectando no WiFi: ");
   Serial.println(ssid);
@@ -255,16 +297,16 @@ void setup() {
     Serial.print(".");
   }
   Serial.println("\nWiFi conectado.");
-
+  
   //configuracao do horario
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
   Serial.println("Horário GMT-3 configurado.");
-
+  
   //leitura inicial dos horarios programados
   horariosUsuario = readMassasHorarios();
 
   //setup do ultrassonico
-  setupUltrassonico();
+  //setupUltrassonico();
 
   //inicio da maquina de estados
   iniciaMaquinaEstados();
@@ -275,11 +317,11 @@ void setup() {
     indice_horario++;
   }
 
-  Serial.print("Horarios: ");
+  Serial.print("Horarios:\n ");
   for(int i = 0; i  < 3; i++) {
     Serial.println(horariosUsuario.horario_array[i]);
   }
-  Serial.print("\nMassas: ");
+  Serial.print("\nMassas:\n ");
   for(int i = 0; i  < 3; i++) {
     Serial.println(horariosUsuario.massa_array[i]);
   }
@@ -287,22 +329,21 @@ void setup() {
   servoMot.close();
   */
   //setupUltrassonico();
-  //bal.tarar();
+  bal.tarar();
+  Serial.print("Begin...");
+  xTaskCreate(taskMaqEst, "Task Maquina de Estados", 8000,NULL,1,NULL);
+
+  //vTaskStartScheduler();
+
+  //for(;;);
+
+
 }
 
 void loop() {
   /*
     // codigoEvento = Serial.parseInt();
-  horario_atual = getTimeSec();
-  if(horario_atual) {
-  Serial.printf("Horario_atual: %d\n", horario_atual);
-  codigoEvento = determinaEvento();
-  codigoAcao = obterAcao(estado, codigoEvento);
-  estado = obterProximoEstado(estado, codigoEvento);
-  Serial.printf("Estado: %d Evento: %d Acao: %d\n", estado, codigoEvento, codigoAcao);
-  executarAcao(codigoAcao);
-  Serial.printf("Indice: %d, Horario: %d\n", indice_horario, horariosUsuario.horario_array[indice_horario]);
-  }
+  
   delay(5000); 
   
 

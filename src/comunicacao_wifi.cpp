@@ -21,15 +21,18 @@ void sendData(String dado, String time ) {
   String url="https://script.google.com/macros/s/"+google_script_escrita+"/exec?" + "date=" + time + "&sensor=" + dado;
   //Serial.print(url);
   Serial.print("Enviando dados de sensor");
-  Serial.println();
+  vTaskDelay(100/portTICK_PERIOD_MS);
+  
+  //Serial.println();
   http.begin(url.c_str()); //Specify the URL and certificate
   http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
-  int httpCode = http.GET();  
+  int httpCode = http.GET();
+  //vTaskDelay(100/portTICK_PERIOD_MS);  
 
   String payload;
     if (httpCode > 0) {
         payload = http.getString();
-        Serial.println(httpCode);    
+        //Serial.println(httpCode);    
     }
   http.end();
 }
