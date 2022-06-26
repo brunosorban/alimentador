@@ -80,6 +80,7 @@ int determinaEvento() {
   Serial.println(massa_atual);
   //vTaskDelay(100/portTICK_PERIOD_MS);
   Serial.print("Distancia atual:");
+  if (dist_cm < 4) dist_cm=100;
   Serial.println(dist_cm);
   Serial.print("------------------------------\n");
   vTaskDelay(100/portTICK_PERIOD_MS);
@@ -191,6 +192,7 @@ void executarAcao(int codigoAcao) {
       massa_necessaria = massa_desejada - massa_atual;
       //abre a porta de deposicao
       servoMot.open();
+      vibMot.On();
       flag_deposicao = 1;
       horario_inicio_deposicao = getTimeMin();
       //Serial.printf("Deposicao iniciada em %d\n", horario_inicio_deposicao);
@@ -198,6 +200,7 @@ void executarAcao(int codigoAcao) {
 
     case A03: //fim da deposicao
       servoMot.close();
+      vibMot.Off();
       flag_deposicao = 0;
       if(indice_horario < 3) {
         indice_horario++;
@@ -206,6 +209,7 @@ void executarAcao(int codigoAcao) {
 
     case A04: //detecta, sai da deposicao
       servoMot.close();
+      vibMot.Off();
       massa_atual = bal.measure();
       
       //atualiza a massa desejada de acordo com o que ja foi depositado
@@ -234,6 +238,7 @@ void executarAcao(int codigoAcao) {
       //Serial.printf("Deposicao iniciada em %d\n", horario_inicio_deposicao);
       //reabre porta
       servoMot.open();
+      vibMot.On();
       flag_deteccao = 0;
       break;
 
@@ -243,6 +248,7 @@ void executarAcao(int codigoAcao) {
 
     case A08:
       servoMot.close();
+      vibMot.Off();
       //Serial.println(" ERRO:TEMPO DE DEPOSICAO MAXIMO ATINGIDO ");
       break;
   }
@@ -358,8 +364,8 @@ void loop() {
   //servoMot.open();
   //delay(500);
   //servoMot.close();
-  vibMot.On();
-  delay(10000);
-  vibMot.Off();
-  delay(1000);
+  //vibMot.On();
+  //delay(10000);
+  //vibMot.Off();
+  //delay(1000);
 }
