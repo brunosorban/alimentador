@@ -19,8 +19,10 @@ servo_esp::servo_esp(int pin)
 
 void servo_esp::open() {
     myservo.write(OPEN_POSITION);
+    vTaskDelay(100/portTICK_RATE_MS);
 }
 
 void servo_esp::close() {
     myservo.write(CLOSED_POSITION);
+    vTaskDelay(100/portTICK_RATE_MS);
 }

@@ -13,10 +13,9 @@
 
 balanca::balanca(int dt, int sck)
 {
-  dt = dt;
-  sck = sck;
   adc_bal = new HX711;
   adc_bal->begin(dt, sck);
+  referencia = 35;
 }
 
 double balanca::measure() {
@@ -34,8 +33,12 @@ double balanca::measure() {
 
     medida = (adc_bal->get_value(10)) / COEF_M_INV;
     medida = medida + COEF_B;
-    medida -= TARA_POTE;
+    medida -= referencia;
     return medida;
+}
+
+void balanca::tarar(){
+  referencia+=measure();
 }
 
 balanca::~balanca() 
