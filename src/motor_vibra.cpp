@@ -1,8 +1,8 @@
-/* 
- * File:      leds.cpp
+/*
+ * File:      motor_vibra.cpp
  * Author:    Bruno A. Sorban
  * Date:      11/06/2022
- * Comments:  Controle dos LEDS do alimentador
+ * Comments:  Controle do motor de vibração
  * Revision history:
  */
 
@@ -15,11 +15,12 @@ motor_vibra::motor_vibra(int pin)
     pinMode(pin, OUTPUT);
 }
 
-void motor_vibra::On() {
+void motor_vibra::On()
+{
     digitalWrite(pino, HIGH);
 }
 
-void motor_vibra::Off() {
+void motor_vibra::Off()
+{
     digitalWrite(pino, LOW);
 }
-	/* LEDS_C */

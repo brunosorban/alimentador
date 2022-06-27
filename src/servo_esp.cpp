@@ -13,7 +13,6 @@
 
 servo_esp::servo_esp(int pin)
 {
-    // pino = pin;
     myservo.attach(pin);
 }
 

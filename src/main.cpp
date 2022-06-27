@@ -1,17 +1,9 @@
 #include <Arduino.h>
-//#include <FreeRTOS.h>
-//#include <queue.h>
-//#include <semphr.h>
-//#include <task.h>
-
-// #include "leds.h"
-// #include "servo.h"
 #include "sensor_ultrassonico.h"
 #include "balanca.h"
 #include "HX711.h"
-// #include "time.h"
 #include "comunicacao_wifi.h"
-#include "maquina.h"
+#include "definicoes_sitema.h"
 #include "servo_esp.h"
 #include "motor_vibra.h"
 
@@ -48,11 +40,11 @@ double massa_consumida;
 double massa_desejada;
 double massa_necessaria;
 
-int horario_atual;      // guarda o horario atual (minutos desde as 00h)
-int flag_deposicao = 0; // se verdadeiro, ocorre deposicao
-int flag_deteccao = 0;  // se verdadeiro, tinha detectado
-int indice_horario = 0;
-int horario_inicio_deposicao = 9999;
+int horario_atual;                   // guarda o horario atual (minutos desde as 00h)
+int flag_deposicao = 0;              // se verdadeiro, ocorre deposicao
+int flag_deteccao = 0;               // se verdadeiro, tinha detectado
+int indice_horario = 0;              // índice que indica qual próximo horário
+int horario_inicio_deposicao = 9999; // horário máximo inalcançável
 
 int acao_matrizTransicao[NUM_ESTADOS][NUM_EVENTOS];
 int proximoestado_matrizTransicao[NUM_ESTADOS][NUM_EVENTOS];
@@ -74,7 +66,6 @@ int determinaEvento()
   Serial.print("------------------------------\n");
   Serial.print("Massa atual:");
   Serial.println(massa_atual);
-  // vTaskDelay(100/portTICK_PERIOD_MS);
   Serial.print("Distancia atual:");
   if (dist_cm < 4)
     dist_cm = 100;
@@ -203,7 +194,6 @@ void executarAcao(int codigoAcao)
     vibMot.On();
     flag_deposicao = 1;
     horario_inicio_deposicao = getTimeMin();
-    // Serial.printf("Deposicao iniciada em %d\n", horario_inicio_deposicao);
     break;
 
   case A03: // fim da deposicao
@@ -244,7 +234,6 @@ void executarAcao(int codigoAcao)
     massa_necessaria = massa_desejada - massa_atual;
 
     horario_inicio_deposicao = getTimeMin();
-    // Serial.printf("Deposicao iniciada em %d\n", horario_inicio_deposicao);
     // reabre porta
     servoMot.open();
     vibMot.On();
@@ -257,20 +246,18 @@ void executarAcao(int codigoAcao)
   case A08:
     servoMot.close();
     vibMot.Off();
-    // Serial.println(" ERRO:TEMPO DE DEPOSICAO MAXIMO ATINGIDO ");
+    Serial.println("---------------- ERRO ----------------");
+    Serial.println("TEMPO DE DEPOSICAO MAXIMO ATINGIDO");
+    Serial.println("-------------------------------------");
     break;
   }
 }
 
 void taskMaqEst(void *pv)
 {
-  int i;
   for (;;)
   {
     horario_atual = getTimeMin();
-    // Serial.printf("Horario_atual: %d\n", horario_atual);
-    // Serial.printf( "contador:%d\n",i++);
-
     if (horario_atual)
     {
       Serial.printf("Horario_atual: %d\n", horario_atual);
@@ -287,8 +274,7 @@ void taskMaqEst(void *pv)
         Serial.printf("Indice: %d, Horario: %d\n", indice_horario, horariosUsuario.horario_array[indice_horario]);
         vTaskDelay(100 / portTICK_PERIOD_MS);
       }
-
-    } /**/
+    }
   }
 }
 /**********************************************
@@ -319,14 +305,12 @@ void setup()
   // leitura inicial dos horarios programados
   horariosUsuario = readMassasHorarios();
 
-  // setup do ultrassonico
-  // setupUltrassonico();
-
   // inicio da maquina de estados
   iniciaMaquinaEstados();
   estado = IDLE;
 
   horario_atual = getTimeMin();
+
   while (horario_atual > horariosUsuario.horario_array[indice_horario])
   {
     indice_horario++;
@@ -342,40 +326,18 @@ void setup()
   {
     Serial.println(horariosUsuario.massa_array[i]);
   }
-  /*
-    servoMot.close();
-    */
-  // setupUltrassonico();
+
   bal.tarar();
-  Serial.print("Begin...");
+  Serial.println("Begin...");
   xTaskCreate(taskMaqEst, "Task Maquina de Estados", 8000, NULL, 1, NULL);
 
-  // vTaskStartScheduler();
+  vTaskStartScheduler();
 
-  // for(;;);
+  for (;;)
+    ;
 }
 
 void loop()
 {
-  /*
-    // codigoEvento = Serial.parseInt();
-
-  delay(5000);
-
-
-  //Serial.printf("Ultrassonico: %f\n", ultraSon.get_ultrasonic());
-  horario_atual = getTimeMin();
-  if(horario_atual) {
-  Serial.printf("Horario_atual: %d\n", horario_atual);}*/
-  // Serial.printf("Balanca: %f\n", bal.measure());
-
-  // bal.measure();
-  // delay(1000);
-  // servoMot.open();
-  // delay(500);
-  // servoMot.close();
-  // vibMot.On();
-  // delay(10000);
-  // vibMot.Off();
-  // delay(1000);
+  // NOTHING
 }
