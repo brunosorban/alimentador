@@ -10,7 +10,6 @@
 #define SENSORES_H
 
 #include <Arduino.h>
-#include <Ultrasonic.h>
 
 // Define os pinos para o trigger e echo
 #define PINO_TRIGGER 25
