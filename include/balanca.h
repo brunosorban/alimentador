@@ -18,19 +18,20 @@
 #define ESCALA_BALANCA_DEN 1
 #define COEF_M_INV -1862
 #define COEF_B 873
-#define TARA_POTE 35
+
 
 class balanca {
     private:
-        int dt;
-        int sck;
+        double referencia;
         double medida;
 
     public:
+        void tarar();
+        double measure();
         balanca(int dt, int sck);
         ~balanca();
         HX711* adc_bal;
-        double measure();
+        
 };
 
 #endif	/* BALANCA_H */

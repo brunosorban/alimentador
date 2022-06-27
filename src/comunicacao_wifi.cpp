@@ -4,8 +4,8 @@
 // const char * ssid = "GUERREIRO_NET";
 // const char * password = "50825084";
 
-const char * ssid = "Ariel_S21FE";
-const char * password = "polipoli";
+const char * ssid = "Thiago's phone";
+const char * password = "Thiago1202";
 
 //String google_script_leitura = "AKfycbw-SfekyBnNRGDhMqtjtv5f6iv7ovYjpLPN2ySiLwsMIL1W3SIv_8LyXqRGtzfUjUZNuA";
 String google_script_leitura = "AKfycbx95y5vE8FR9Zqb0F6eATDhAlcTmFlUyF80ufQr3irM9_HXP6n-WVxAqievXl4GBZCRcw";
@@ -21,15 +21,18 @@ void sendData(String dado, String time ) {
   String url="https://script.google.com/macros/s/"+google_script_escrita+"/exec?" + "date=" + time + "&sensor=" + dado;
   //Serial.print(url);
   Serial.print("Enviando dados de sensor");
-  Serial.println();
+  vTaskDelay(100/portTICK_PERIOD_MS);
+  
+  //Serial.println();
   http.begin(url.c_str()); //Specify the URL and certificate
   http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
-  int httpCode = http.GET();  
+  int httpCode = http.GET();
+  //vTaskDelay(100/portTICK_PERIOD_MS);  
 
   String payload;
     if (httpCode > 0) {
         payload = http.getString();
-        Serial.println(httpCode);    
+        //Serial.println(httpCode);    
     }
   http.end();
 }
@@ -102,7 +105,7 @@ horarios readMassasHorarios() {
 }    
 
 
-int getTimeSec() {
+int getTimeMin() {
   struct tm timeinfo;
   if(getLocalTime(&timeinfo)) {
     //Serial.println(&timeinfo, "%A, %B %d %Y %H:%M:%S");

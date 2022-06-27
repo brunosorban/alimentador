@@ -38,7 +38,7 @@ String readData();
 
 horarios readMassasHorarios();
 
-int getTimeSec();
+int getTimeMin();
 
 
 #endif
