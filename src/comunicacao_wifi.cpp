@@ -16,7 +16,8 @@ void sendData(String dado, String time)
 {
   HTTPClient http;
   String url = "https://script.google.com/macros/s/" + google_script_escrita + "/exec?" + "date=" + time + "&sensor=" + dado;
-  Serial.print("Enviando dados de sensor\n");
+  Serial.print("Enviando dados...\n");
+  Serial.println("-----------------------------------------------");
   vTaskDelay(100 / portTICK_PERIOD_MS);
 
   http.begin(url.c_str()); // Specify the URL and certificate

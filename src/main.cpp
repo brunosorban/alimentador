@@ -13,6 +13,7 @@
 #define DIST_TRESH 25    // distancia em cm que considera deteccao
 #define HORARIO_UPDATE 5 // minutos desde as 00h
 #define TEMPO_ERRO 1     // minutos para a deposicao
+#define WIFI_TIMEOUT 20
 
 /**********************************************
               Criacao dos objetos
@@ -61,18 +62,29 @@ int timer_atualizacao;
 int determinaEvento()
 {
   // obtencao de dados
+
   dist_cm = ultraSon.get_ultrasonic();
   massa_atual = bal.measure();
-  Serial.print("------------------------------\n");
-  Serial.print("Massa atual:");
+  Serial.println("------------------ Dados ----------------------");
+  Serial.print("Massa atual:     ");
   Serial.println(massa_atual);
-  Serial.print("Distancia atual:");
+  Serial.print("Distancia atual: ");
+
   if (dist_cm < 4)
+  {
+    Serial.print("NO READING");
     dist_cm = 100;
-  Serial.println(dist_cm);
-  Serial.print("------------------------------\n");
+  }
+  else
+    Serial.print(dist_cm);
+
+  dist_cm < DIST_TRESH ? Serial.println("    PRESENTE") : Serial.println("    AUSENTE");
+
   vTaskDelay(100 / portTICK_PERIOD_MS);
   horario_atual = getTimeMin();
+  Serial.print("Horário atual:  ");
+  Serial.printf("%02d:%02d\n", (int)horario_atual / 60, horario_atual % 60);
+  Serial.println("-----------------------------------------------");
 
   // logica para evento
 
@@ -246,10 +258,61 @@ void executarAcao(int codigoAcao)
   case A08:
     servoMot.close();
     vibMot.Off();
-    Serial.println("---------------- ERRO ----------------");
+    Serial.println("------------------ ERRO -----------------------");
     Serial.println("TEMPO DE DEPOSICAO MAXIMO ATINGIDO");
-    Serial.println("-------------------------------------");
+    Serial.println("-----------------------------------------------");
+    ESP.restart();
+    for (;;)
+      ;
     break;
+  }
+}
+
+String decodeEstado(int estado)
+{
+  switch (estado)
+  {
+  case IDLE:
+    return "IDLE";
+  case DEPOSICAO:
+    return "DEPOSIÇÃO";
+  case DETECCAO:
+    return "DETECÇÃO";
+  case ERRO:
+    return "ERRO";
+
+  default:
+    return "";
+  }
+}
+String decodeAcao(int acao)
+{
+  if (acao == NENHUMA_ACAO)
+    return "NENHUMA_ACAO";
+  return String("A0" + (String)(acao + 1));
+}
+String decodeEvento(int evento)
+{
+  switch (evento)
+  {
+  case NENHUM_EVENTO:
+    return "NENHUM_EVENTO";
+  case DETECTAR:
+    return "DETECTAR";
+  case ACIONAR:
+    return "ACIONAR";
+  case DESACIONAR:
+    return "DESACIONAR";
+  case REGISTRAR:
+    return "REGISTRAR";
+  case REGISTRAR_ACIONAR:
+    return "REGISTRAR_ACIONAR";
+  case ATUALIZAR:
+    return "ATUALIZAR";
+  case AVISAR:
+    return "AVISAR";
+  default:
+    return "";
   }
 }
 
@@ -260,20 +323,38 @@ void taskMaqEst(void *pv)
     horario_atual = getTimeMin();
     if (horario_atual)
     {
-      Serial.printf("Horario_atual: %d\n", horario_atual);
+      if (indice_horario < 3)
+      {
+        Serial.printf("Próximo Horario: %02d:%02d\n", (int)horariosUsuario.horario_array[indice_horario] / 60, horariosUsuario.horario_array[indice_horario] % 60);
+        Serial.printf("Próxima Quantidade ração: %.2f\n", (float)horariosUsuario.massa_array[indice_horario]);
+        Serial.printf("Índice: %d\n", indice_horario);
+        Serial.println("-----------------------------------------------");
+      }
+      else
+      {
+        Serial.println("\n         Rotina Concluida\n");
+        Serial.println("-----------------------------------------------");
+      }
+
       vTaskDelay(100 / portTICK_PERIOD_MS);
 
       codigoEvento = determinaEvento();
-      if (codigoEvento != NENHUM_EVENTO)
-      {
-        codigoAcao = obterAcao(estado, codigoEvento);
-        estado = obterProximoEstado(estado, codigoEvento);
-        Serial.printf("Estado: %d Evento: %d Acao: %d\n", estado, codigoEvento, codigoAcao);
-        vTaskDelay(100 / portTICK_PERIOD_MS);
-        executarAcao(codigoAcao);
-        Serial.printf("Indice: %d, Horario: %d\n", indice_horario, horariosUsuario.horario_array[indice_horario]);
-        vTaskDelay(100 / portTICK_PERIOD_MS);
-      }
+      
+      codigoAcao = obterAcao(estado, codigoEvento);
+      estado = obterProximoEstado(estado, codigoEvento);
+      Serial.println("--------------- Máquina de Estados ------------");
+      Serial.printf("Estado: %d  ", estado);
+      Serial.println(decodeEstado(estado));
+      Serial.printf("Evento: %d  ", codigoEvento);
+      Serial.println(decodeEvento(codigoEvento));
+      Serial.printf("Acao:   %d  ", codigoAcao);
+      Serial.println(decodeAcao(codigoAcao));
+      Serial.println("-----------------------------------------------");
+      vTaskDelay(100 / portTICK_PERIOD_MS);
+      executarAcao(codigoAcao);
+      
+
+      vTaskDelay(5000 / portTICK_PERIOD_MS);
     }
   }
 }
@@ -291,16 +372,24 @@ void setup()
   Serial.println(ssid);
   Serial.flush();
   WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED)
+  unsigned long initTime = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() -initTime < WIFI_TIMEOUT*1000)
   {
     delay(500);
     Serial.print(".");
   }
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    Serial.print("\nFailed to Connect\n");
+    Serial.print("Rebooting...\n");
+    ESP.restart();
+  } 
+
   Serial.println("\nWiFi conectado.");
 
   // configuracao do horario
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-  Serial.println("Horário GMT-3 configurado.");
+  Serial.println("Horário GMT-3 configurado.\n");
 
   // leitura inicial dos horarios programados
   horariosUsuario = readMassasHorarios();
@@ -316,19 +405,18 @@ void setup()
     indice_horario++;
   }
 
-  Serial.print("Horarios:\n ");
+  Serial.print("Horarios | Massas\n");
   for (int i = 0; i < 3; i++)
   {
-    Serial.println(horariosUsuario.horario_array[i]);
+    Serial.printf("  %02d:%02d  | %.2f\n",
+                  (int)horariosUsuario.horario_array[i] / 60,
+                  horariosUsuario.horario_array[i] % 60,
+                  (float)horariosUsuario.massa_array[i]);
   }
-  Serial.print("\nMassas:\n ");
-  for (int i = 0; i < 3; i++)
-  {
-    Serial.println(horariosUsuario.massa_array[i]);
-  }
-
   bal.tarar();
-  Serial.println("Begin...");
+  // delay(10000);
+  Serial.println("\nBegin...");
+  Serial.println("-----------------------------------------------");
   xTaskCreate(taskMaqEst, "Task Maquina de Estados", 8000, NULL, 1, NULL);
 
   vTaskStartScheduler();
